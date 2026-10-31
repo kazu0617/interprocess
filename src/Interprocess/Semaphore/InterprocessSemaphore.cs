@@ -14,8 +14,12 @@ internal static class InterprocessSemaphore
 {
     internal static IInterprocessSemaphoreWaiter CreateWaiter(string name)
     {
+        // Steam Frame's ARM64 Wine can execute the x64 managed/PE payload via
+        // ARM64EC/FEX, but cannot load Resonite's x86-64 ELF shmbridge.dll.so.
+        // Wine's Win32 named semaphore implementation is compatible here and
+        // avoids crossing into that mismatched native ELF helper.
         if (Util.IsWine)
-            return new SemaphoreWine(name);
+            return new SemaphoreWindows(name);
 
         if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             return new SemaphoreWindows(name);
@@ -29,7 +33,7 @@ internal static class InterprocessSemaphore
     internal static IInterprocessSemaphoreReleaser CreateReleaser(string name)
     {
         if (Util.IsWine)
-            return new SemaphoreWine(name);
+            return new SemaphoreWindows(name);
 
         if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             return new SemaphoreWindows(name);
